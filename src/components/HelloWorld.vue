@@ -1,58 +1,148 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  <div>
+		<div id="app" class="chat-container">
+			<div class="chat-messages">
+				<div v-for="message in chatMessages" :key="message.id" class="message-container">
+					<div v-if="message.role === 'user'" class="user-message">{{ message.content }}</div>
+					<div v-if="message.role === 'assistant'" class="assistant-message">{{ message.content }}</div>
+				</div>
+			</div>
+		</div>	
+    <div class="input-container">
+      <input v-model="userMessage" type="text" placeholder="Enter a message" class="input-field" @keydown.enter="sendMessage">
+
+      <button @click="sendMessage" class="send-button">Send</button>
+    </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
-  }
+<style>
+.chat-container {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-between;
+	background-color: #f2f2f2;
+	padding: 20px;
+	box-sizing: border-box;
 }
-</script>
+.chat-messages {
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 10px;
+  width: 400px;
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
 }
-ul {
-  list-style-type: none;
-  padding: 0;
+
+.message-container {
+  margin-bottom: 10px;
 }
-li {
-  display: inline-block;
-  margin: 0 10px;
+
+.user-message {
+  background-color: #e0e0e0;
+  color: #000;
+  padding: 10px;
+  border-radius: 8px;
 }
-a {
-  color: #42b983;
+
+.assistant-message {
+  background-color: #007bff;
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.input-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+
+}
+.input-wrapper {
+	display: flex;
+	align-items: center;
+	padding: 10px;
+}
+
+.input-wrapper input {
+	flex-grow: 1;
+	padding: 10px;
+	border: none;
+	border-radius: 5px;
+	background-color: #f2f2f2;
+	box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+}
+
+.input-field {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.send-button {
+  background-color: #007bff;
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.send-button:hover {
+  background-color: #0056b3;
 }
 </style>
+
+<script>
+import axios from 'axios';
+
+export default {
+  data() {
+    return {
+      chatMessages: [],
+      userMessage: ''
+    };
+  },
+  methods: {
+    async sendMessage() {
+      const apiKey = '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';
+      const apiUrl = 'https://api.openai.com/v1/chat/completions';
+
+      axios.defaults.headers.common['Authorization'] = `Bearer ${apiKey}`;
+
+      try {
+        // 发送用户输入的消息
+        this.chatMessages.push({ role: 'user', content: this.userMessage });
+
+        const response = await axios.post(apiUrl, {
+          model: 'gpt-3.5-turbo',
+          messages: this.chatMessages,
+          temperature: 0.7
+        });
+
+        // 添加助手的回复到聊天消息
+        const assistantReply = response.data.choices[0];
+        this.chatMessages.push({
+          role: 'assistant',
+          content: assistantReply.message.content
+        });
+
+        // 清空用户输入
+        this.userMessage = '';
+
+        // 滚动到底部
+        this.$nextTick(() => {
+          const chatContainer = document.querySelector('.chat-messages');
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    }
+  }
+};
+</script>

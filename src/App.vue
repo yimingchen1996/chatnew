@@ -1,15 +1,17 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div>
+    <h1>艾米的ChatGPT壳子</h1>
+    <ChatGPT />
+  </div>
 </template>
 
+
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import ChatGPT from './components/HelloWorld.vue'
 
 export default {
-  name: 'App',
   components: {
-    HelloWorld
+    ChatGPT
   }
 }
 </script>
